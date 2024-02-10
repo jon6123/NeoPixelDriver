@@ -16,13 +16,23 @@ architecture ws2812_architecture of ws2812 is
 
 -- CLK counter signals
 signal c_CNT_80KHZ  : natural := 31;
-signal r_CNT_80KHZ  : natural range 0 to c_CNT_80KHZ;
+
+signal c_t0h : natural := 17;
+signal c_t1h : natural := 35;
+signal c_t1l : natural := 30;
+signal c_t0l : natural := 40;
+
+signal b_bitState : std_logic := '1';
+
+signal r_CNT_BIT : natural range 0 to (2 *c_CNT_80KHZ);
+signal r_CNT_80KHZ  : natural range 0 to (2 *c_CNT_80KHZ);
 signal b_CLK_80KHZ  : std_logic := '1';
 
 signal b_CLK_gate  : std_logic := '0';
 signal c_MAX_bits  : natural := 24;
 signal r_CNT_bits  : natural range 0 to (2 * c_MAX_bits);
 
+signal data : std_logic_vector(23 downto 0) := x"FF00FF";
 
 begin
 
@@ -37,12 +47,31 @@ begin
         -- during gated process
         if b_CLK_gate = '1' then
 
+            if b_bitState = '1' then
+                if data(r_CNT_bits) = '1' then
+                    r_CNT_BIT <= c_t1h;
+                else
+                    r_CNT_BIT <= c_t0h;
+                end if;
+            else
+                if data(r_CNT_bits) = '1' then
+                    r_CNT_BIT <= c_t1l;
+                else
+                    r_CNT_BIT <= c_t0l;
+                end if;
+            end if;
+
             -- calculate ws2812 clk and count roll overs
             if rising_edge(i_clk) then
-                if r_CNT_80KHZ = c_CNT_80KHZ - 1 then
+                if r_CNT_80KHZ = r_CNT_BIT - 1 then
                     b_CLK_80KHZ <= not b_CLK_80KHZ;
                     r_CNT_80KHZ <= 0;
-                    r_CNT_bits <= r_CNT_bits + 1;
+                    if b_bitState = '0' then
+                        r_CNT_bits <= r_CNT_bits + 1;
+                        b_bitState <= '1';
+                    else
+                        b_bitState <= '0';
+                    end if;
                 else
                     r_CNT_80KHZ <= r_CNT_80KHZ + 1;
                 end if;       
@@ -51,7 +80,7 @@ begin
         end if;
 
         -- if ws2812 CLK rollover count (bit edges) = edges of max bits, then close gate
-        if r_CNT_bits = (2 * c_MAX_bits) - 1 then
+        if r_CNT_bits = c_MAX_bits then
             b_CLK_gate <= '0';
             b_CLK_80KHZ <= '1';
             r_CNT_bits <= 0;
