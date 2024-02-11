@@ -40,6 +40,8 @@ architecture rtl of portSPI is
     port
     (
       i_clk       : IN STD_LOGIC;
+      o_ledring   : OUT std_logic_vector(23 downto 0);
+      o_ledtrans  : OUT STD_LOGIC;
       o_flashing  : OUT STD_LOGIC
     );
   end component;
@@ -49,6 +51,8 @@ architecture rtl of portSPI is
     (
         i_clk       : IN STD_LOGIC;
         i_enable    : IN STD_LOGIC;
+        i_data      : IN std_logic_vector(23 downto 0);
+        i_dataTrans : IN STD_LOGIC;
         o_data      : OUT STD_LOGIC
     );
   end component;
@@ -56,6 +60,8 @@ architecture rtl of portSPI is
   -- Signals for interconnecting modules
   signal signal_interconnect1   : std_logic;
   signal s_flashing             : std_logic;
+  signal led_data               : std_logic_vector(23 downto 0);
+  signal led_trans              : std_logic;
 
 begin
   -- Instantiate S1toD1
@@ -77,14 +83,18 @@ begin
 
   inst_blink: blink
     port map(
-      i_clk => ipin_clk50,
-      o_flashing => s_flashing
+      i_clk     => ipin_clk50,
+      o_ledring =>   led_data,
+      o_ledtrans=> led_trans,
+      o_flashing=> s_flashing
     );
 
   inst_spi: ws2812
     port map(
       i_clk     => ipin_clk50,
       i_enable  => s_flashing,
+      i_data    => led_data,
+      i_dataTrans => led_trans,
       o_data    => opin_LEDring
     );
 
