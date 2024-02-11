@@ -13,7 +13,7 @@ entity portSPI is
     opin_D1     : out std_logic;
     opin_D5     : out std_logic;
     opin_LEDring: out std_logic;
-    opin_trigger:out std_logic
+    opin_trigger: out std_logic
   );
 end portSPI;
 
@@ -48,7 +48,7 @@ architecture rtl of portSPI is
     port
     (
         i_clk       : IN STD_LOGIC;
-        i_trig      : IN STD_LOGIC;
+        i_enable    : IN STD_LOGIC;
         o_data      : OUT STD_LOGIC
     );
   end component;
@@ -84,7 +84,7 @@ begin
   inst_spi: ws2812
     port map(
       i_clk     => ipin_clk50,
-      i_trig    => s_flashing,
+      i_enable  => s_flashing,
       o_data    => opin_LEDring
     );
 
